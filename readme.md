@@ -1,6 +1,6 @@
 # 🛠️ offlineToolBox Pro
 
-You can try/попробовать: [link](https://lqdope.github.io/offlineToolKit/)
+You can try/попробовать: [https://lqdope.github.io/offlineToolKit/](https://lqdope.github.io/offlineToolKit/)
 
 Современный, ультра-легковесный и минималистичный цифровой мультитул в формате «все в одном». Набор утилит для повседневных задач разработчика и продуктивной работы, способный функционировать полностью локально и автономно прямо в вашем браузере.
 
