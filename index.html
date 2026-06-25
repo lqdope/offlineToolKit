@@ -6,422 +6,876 @@
   <title>offlineToolBox Pro</title>
   <style>
     /* ==========================================================================
-       1. СТИЛИ И ПЕРЕМЕННЫЕ (Современный минимализм)
+       1. СТИЛИ И ТЕМЫ (Фирменный синий ретро-футуристичный дизайн с защитой #root)
        ========================================================================== */
     :root {
-      --bg-color: #f8f9fa;
-      --text-color: #212529;
-      --text-muted: #6c757d;
+      --bg-color: #0a0f1d;
+      --sidebar-bg: #111827;
+      --card-bg: rgba(17, 24, 39, 0.7);
+      --text-color: #e5e7eb;
+      --text-muted: #9ca3af;
       --accent-color: #3b82f6;
-      --card-bg: #ffffff;
-      --card-border: #e9ecef;
+      --accent-glow: #2563eb;
+      --border-color: #1e3a8a;
+      --danger-color: #ef4444;
       --radius: 12px;
       --transition: all 0.2s ease-in-out;
       --font-main: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
 
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg-color: #0d1117;
-        --text-color: #c9d1d9;
-        --text-muted: #8b949e;
-        --card-bg: #161b22;
-        --card-border: #30363d;
-      }
-    }
-
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: var(--font-main);
       background-color: var(--bg-color);
+      background-image: radial-gradient(circle at 50% 50%, #1e1b4b 0%, #0a0f1d 100%);
       color: var(--text-color);
-      line-height: 1.5;
+      display: flex;
+      min-height: 100vh;
       -webkit-font-smoothing: antialiased;
-      padding: 2rem 1rem;
     }
 
-    .container { max-width: 1200px; margin: 0 auto; }
-    h1 { font-size: 2.25rem; font-weight: 600; margin-bottom: 0.25rem; }
-    .subtitle { color: var(--text-muted); margin-bottom: 2rem; }
-    h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; }
-    p { font-size: 0.95rem; color: var(--text-muted); margin-bottom: 1rem; }
-
-    /* Сетка плиток (Инструментов) */
-    .tools-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-      gap: 1.5rem;
+    /* Защита корневого контейнера React / SPA структуры */
+    #root {
+      display: flex;
+      width: 100%;
+      min-height: 100vh;
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
     }
 
-    /* Стиль карточки для каждого инструмента */
-    .tool-card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius);
-      padding: 1.5rem;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.01);
+    /* Сайдбар навигации */
+    .sidebar {
+      width: 280px;
+      background-color: var(--sidebar-bg);
+      border-right: 2px solid var(--border-color);
       display: flex;
       flex-direction: column;
+      padding: 1.5rem;
+      position: fixed;
+      height: 100vh;
+      z-index: 10;
+      box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
     }
+    .sidebar-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 2rem; }
+    .sidebar-header h2 { font-size: 1.35rem; color: #60a5fa; text-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
+    .badge { background: var(--accent-color); color: white; padding: 0.25rem 0.5rem; border-radius: 20px; font-size: 0.75rem; font-weight: bold; box-shadow: 0 0 8px var(--accent-glow); }
+    .menu { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
+    .menu-btn {
+      background: none; border: 1px solid transparent; text-align: left; padding: 0.75rem 1rem;
+      font-size: 0.95rem; color: var(--text-color); cursor: pointer; border-radius: var(--radius);
+      transition: var(--transition); font-weight: 500; display: flex; align-items: center; gap: 0.5rem;
+    }
+    .menu-btn:hover { background-color: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3); color: #60a5fa; }
+    .menu-btn.active { background-color: var(--accent-color); color: white; border-color: var(--accent-glow); box-shadow: 0 0 12px rgba(59, 130, 246, 0.4); }
+    .sidebar-footer { font-size: 0.8rem; color: var(--text-muted); text-align: center; border-top: 1px solid var(--border-color); padding-top: 1rem; }
 
-    /* Формы */
-    .form-group { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem; }
-    .input-group { display: flex; gap: 0.5rem; width: 100%; }
-    .input-group input { flex: 1; }
+    /* Основной контент */
+    .content { margin-left: 280px; padding: 2.5rem; flex: 1; max-width: 1200px; width: calc(100% - 280px); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
 
-    input[type="text"], input[type="url"], input[type="number"], textarea, select {
-      font-family: inherit;
-      font-size: 0.95rem;
-      padding: 0.6rem 0.85rem;
-      border-radius: var(--radius);
-      border: 1px solid var(--card-border);
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      outline: none;
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    h1 { font-size: 2rem; font-weight: 600; margin-bottom: 0.25rem; color: #fff; text-shadow: 0 0 15px rgba(59, 130, 246, 0.3); }
+    .subtitle { color: var(--text-muted); margin-bottom: 2rem; font-size: 0.95rem; }
+    h3 { font-size: 1.15rem; font-weight: 600; margin-bottom: 0.5rem; color: #60a5fa; display: flex; align-items: center; gap: 0.4rem; }
+    p { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.4; word-break: break-word; }
+
+    /* Сетка и карточки с ПОЛНОЙ адаптивностью под содержимое */
+    .tools-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); 
+      gap: 1.5rem; 
+      align-items: stretch; /* Растягивает карточки в одном ряду до одинаковой высоты для красоты */
+    }
+    
+    .tool-card {
+      background-color: var(--card-bg); 
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius); 
+      padding: 1.5rem; 
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(8px);
       transition: var(--transition);
+      
+      /* Адаптивная Flexbox структура внутренностей */
+      display: flex; 
+      flex-direction: column; 
+      justify-content: flex-start;
+      height: auto; 
+      min-height: max-content; 
+      word-break: break-word;
+      overflow-wrap: break-word;
     }
-    textarea { resize: vertical; min-height: 80px; }
-    input:focus, textarea:focus, select:focus {
-      border-color: var(--accent-color);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-    }
+    .tool-card:hover { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.2); }
 
-    label { font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+    /* Элементы форм */
+    .form-group { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 0.75rem; 
+      margin-top: auto; /* Смещает группы форм и важные кнопки вниз, если верхний текст короткий */
+      width: 100%;
+    }
+    .input-group { display: flex; gap: 0.5rem; width: 100%; }
+    .input-group input { flex: 1; min-width: 0; } /* Продлевает адаптивность при сильном сжатии окон */
+
+    .btn-group-sm { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.25rem; }
+
+    input[type="text"], input[type="url"], input[type="number"], input[type="date"], input[type="datetime-local"], textarea, select {
+      font-family: inherit; font-size: 0.95rem; padding: 0.6rem 0.85rem;
+      border-radius: var(--radius); border: 1px solid var(--border-color);
+      background-color: #1f2937; color: var(--text-color); outline: none; transition: var(--transition);
+      width: 100%;
+    }
+    textarea { 
+      resize: vertical; 
+      min-height: 100px; 
+      flex-grow: 1; /* Позволяет текстовым зонам забирать свободное пространство */
+    }
+    input:focus, textarea:focus, select:focus { border-color: var(--accent-color); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3); background-color: #111827; }
+
+    label { font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin-bottom: 0.25rem; color: var(--text-color); }
     button {
       font-family: inherit; font-size: 0.95rem; padding: 0.6rem 1rem;
-      border-radius: var(--radius); border: none;
-      background-color: var(--text-color); color: var(--bg-color);
+      border-radius: var(--radius); border: none; background-color: #374151; color: var(--text-color);
       font-weight: 500; cursor: pointer; transition: var(--transition);
       white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem;
     }
-    button:hover { opacity: 0.9; transform: translateY(-1px); }
+    button:hover { background-color: #4b5563; opacity: 0.95; transform: translateY(-1px); }
     button:active { transform: translateY(0); }
 
-    .btn-accent { background-color: var(--accent-color); color: #fff; }
-    .btn-danger { background-color: #ef4444; color: #fff; padding: 0.25rem 0.5rem; font-size: 0.85rem; }
-    .btn-icon { padding: 0.6rem; background-color: var(--card-border); color: var(--text-color); }
+    .btn-accent { background-color: var(--accent-color); color: #fff; box-shadow: 0 0 8px rgba(59, 130, 246, 0.3); }
+    .btn-accent:hover { background-color: #2563eb; box-shadow: 0 0 12px rgba(59, 130, 246, 0.5); }
+    .btn-danger { background-color: var(--danger-color); color: #fff; }
+    .btn-danger:hover { background-color: #dc2626; }
+    .btn-icon { padding: 0.6rem; background-color: #1f2937; border: 1px solid var(--border-color); color: var(--text-color); }
+    .btn-sm { padding: 0.35rem 0.6rem; font-size: 0.8rem; background-color: #1f2937; border: 1px solid var(--border-color); color: var(--text-color); }
+    .btn-sm:hover { border-color: var(--accent-color); }
 
-    /* Список сохраненных паролей */
-    .password-list { list-style: none; margin-top: 1rem; max-height: 150px; overflow-y: auto; }
-    .password-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background-color: var(--bg-color); border-radius: var(--radius); margin-bottom: 0.5rem; }
-    
-    /* Чат ИИ */
+    /* Специфичный вывод результатов */
+    .calc-results {
+      background-color: rgba(17, 24, 39, 0.9); border: 1px solid var(--border-color);
+      border-radius: var(--radius); padding: 0.75rem; font-size: 0.85rem;
+      display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.75rem;
+      width: 100%; word-break: break-all;
+    }
+    .calc-results strong { color: #60a5fa; }
+
+    /* Пароли */
+    .password-list { list-style: none; margin-top: 1rem; max-height: 250px; overflow-y: auto; width: 100%; }
+    .password-item { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem; background-color: #1f2937; border: 1px solid var(--border-color); border-radius: var(--radius); margin-bottom: 0.5rem; gap: 0.5rem; }
+    .password-item > div { min-width: 0; flex: 1; }
+    .saved-strength { font-size: 0.75rem; font-weight: 600; margin-top: 0.15rem; display: block; }
+    .strength-meter { font-size: 0.85rem; font-weight: 500; margin-top: 0.25rem; display: none; }
+
+    /* Оллама чат */
     .chat-box {
-      border: 1px solid var(--card-border); border-radius: var(--radius);
-      height: 280px; overflow-y: auto; padding: 0.75rem;
-      background-color: var(--bg-color); display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.75rem;
+      border: 1px solid var(--border-color); border-radius: var(--radius);
+      height: 300px; overflow-y: auto; padding: 0.75rem;
+      background-color: #111827; display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.75rem;
     }
-    .msg { padding: 0.5rem 0.75rem; border-radius: 8px; max-width: 85%; font-size: 0.9rem; word-break: break-word; }
-    .msg.user { background: var(--accent-color); color: white; align-self: flex-end; }
-    .msg.ai { background: var(--card-border); color: var(--text-color); align-self: flex-start; }
+    .msg { padding: 0.5rem 0.75rem; border-radius: 8px; max-width: 85%; font-size: 0.9rem; word-break: break-word; line-height: 1.4; }
+    .msg.user { background: var(--accent-color); color: white; align-self: flex-end; box-shadow: 0 0 8px rgba(59, 130, 246, 0.3); }
+    .msg.ai { background: #1f2937; border: 1px solid var(--border-color); color: var(--text-color); align-self: flex-start; }
+    .ai-settings { font-size: 0.8rem; padding: 0.5rem; border: 1px dashed var(--border-color); border-radius: var(--radius); margin-bottom: 0.5rem; display: flex; flex-direction: column; gap: 0.25rem; background: rgba(0,0,0,0.2); }
+    .file-preview { font-size: 0.8rem; color: #60a5fa; margin-bottom: 0.5rem; display: none; }
 
-    .ai-settings {
-      font-size: 0.8rem; padding: 0.5rem; border: 1px dashed var(--card-border);
-      border-radius: var(--radius); margin-bottom: 0.5rem; display: flex; flex-direction: column; gap: 0.25rem;
-    }
-    .file-preview { font-size: 0.8rem; color: var(--accent-color); margin-bottom: 0.5rem; display: none; }
-    
-    /* Скрапер результатов */
-    #scraperResults { margin-top: 1rem; max-height: 150px; overflow-y: auto; font-size: 0.85rem; }
+    #scraperResults { margin-top: 1rem; max-height: 200px; overflow-y: auto; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.3rem; width: 100%; }
+    .img-scraped-link { color: #60a5fa; text-decoration: none; word-break: break-all; font-family: monospace; display: block; padding: 0.25rem; background: #1f2937; border-radius: 4px; }
+    .hash-outputs { background: #111827; border: 1px solid var(--border-color); padding: 0.75rem; border-radius: var(--radius); font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; word-break: break-all; width: 100%; }
+    .hash-outputs code { font-family: monospace; color: #34d399; word-break: break-all; }
+
+    /* Локальный цифровой компас */
+    .compass-container { display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 1rem 0; position: relative; width: 100%; }
+    .compass-ring { width: 120px; height: 120px; border-radius: 50%; border: 3px solid #60a5fa; position: relative; transition: transform 0.1s linear; background: #111827; box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); }
+    .compass-arrow { width: 4px; height: 50px; background: var(--danger-color); position: absolute; top: 10px; left: 58px; transform-origin: bottom center; box-shadow: 0 0 8px var(--danger-color); }
+    .compass-label { position: absolute; font-size: 0.75rem; font-weight: bold; }
+    .label-n { top: 4px; left: 55px; color: var(--danger-color); }
+    .label-s { bottom: 4px; left: 56px; color: var(--text-color); }
+    .label-e { right: 6px; top: 51px; color: var(--text-color); }
+    .label-w { left: 6px; top: 51px; color: var(--text-color); }
+
+    /* SOS режим */
+    body.sos-active { background: #000 !important; }
+    body.sos-active .sidebar, body.sos-active .content { display: none !important; }
+    #sosOverlay { display: none; position: fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; background:#000; justify-content:center; align-items:center; flex-direction:column; }
+    #sosOverlay.active { display: flex; }
+    #sosOverlay h2 { color: #fff; font-size: 3rem; margin-bottom: 2rem; font-weight: 900; letter-spacing: 5px; }
+
+    hr { border: none; border-top: 1px solid var(--border-color); margin: 1rem 0; width: 100%; }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <h1>offlineToolBox Pro</h1>
-    <p class="subtitle">Легковесный цифровой мультитул «всё в одном».</p>
-
-    <div class="tools-grid">
-
-      <div class="tool-card" style="grid-row: span 2;">
-        <h3>🤖 ИИ-Помощник (Ollama)</h3>
-        <p>Чат с поддержкой голоса, файлов и кастомного хоста.</p>
-        
-        <div class="ai-settings">
-          <label>Host: <input type="url" id="aiHost" value="http://localhost:11434" style="padding:0.25rem; font-size:0.8rem;"></label>
-          <label>Model: <input type="text" id="aiModel" value="llama3" style="padding:0.25rem; font-size:0.8rem;"></label>
-        </div>
-
-        <div class="chat-box" id="chatBox">
-          <div class="msg ai">Привет! Запустите локальную Ollama, и я помогу вам с кодом, текстом или рефакторингом.</div>
-        </div>
-        
-        <div class="file-preview" id="filePreview">📎 Изображение прикреплено</div>
-
-        <div class="input-group">
-          <input type="file" id="aiFile" accept="image/*" style="display:none;" onchange="handleFileSelect()">
-          <button class="btn-icon" onclick="document.getElementById('aiFile').click()" title="Прикрепить картинку (Vision)">📎</button>
-          
-          <input type="text" id="chatInput" placeholder="Спросить ИИ..." onkeydown="if(event.key==='Enter') sendToAI()">
-          
-          <button class="btn-icon" id="micBtn" onclick="toggleVoice()" title="Голосовой ввод">🎙️</button>
-          <button class="btn-accent" onclick="sendToAI()">→</button>
-        </div>
+  <div id="root">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>🛠️ ToolBox Pro</h2>
+        <span class="badge">Offline</span>
       </div>
+      <nav class="menu">
+        <button class="menu-btn active" data-target="assistant-tab">🤖 ИИ Ассистент</button>
+        <button class="menu-btn" data-target="devtools-tab">💻 Текст & DevTools</button>
+        <button class="menu-btn" data-target="media-tab">🖼️ Мультимедиа</button>
+        <button class="menu-btn" data-target="calc-tab">🧮 Калькуляторы</button>
+        <button class="menu-btn" data-target="survival-tab">🚨 Экстренное</button>
+      </nav>
+      <div class="sidebar-footer">
+        <p>Zero-Telemetry Base</p>
+      </div>
+    </aside>
 
-      <div class="tool-card">
-        <h3>🔐 Генератор паролей</h3>
-        <p>Быстрое создание безопасных паролей.</p>
-        <div class="input-group">
-          <input type="text" id="resultPass" readonly placeholder="Нажмите 'Генерировать'">
-          <button onclick="copyText('resultPass')">Копировать</button>
-        </div>
-        <div class="form-group">
-          <label>Длина: <span id="lenVal">12</span>
-            <input type="range" id="passLength" min="6" max="30" value="12" oninput="document.getElementById('lenVal').innerText=this.value">
-          </label>
-          <label><input type="checkbox" id="passNum" checked> Цифры</label>
-          <label><input type="checkbox" id="passSym" checked> Спецсимволы</label>
-          <button class="btn-accent" onclick="generatePassword()">Генерировать</button>
-        </div>
-        <div class="form-group" id="saveSection" style="display: none; border-top: 1px solid var(--card-border); padding-top: 0.5rem;">
-          <div class="input-group">
-            <input type="text" id="passTitle" placeholder="Ярлык (например, GitHub)">
-            <button onclick="savePassword()">В менеджер</button>
+    <main class="content">
+
+      <section id="assistant-tab" class="tab-content active">
+        <h1>Локальный ИИ Ассистент</h1>
+        <p class="subtitle">Интеграция с Ollama, Vision-моделями и голосовым вводом.</p>
+        <div class="tools-grid">
+          <div class="tool-card" style="grid-column: span 2;">
+            <h3>🤖 Чат Ollama (Локально)</h3>
+            <p>Все запросы остаются на вашем ПК.</p>
+            <div class="ai-settings">
+              <label>Host: <input type="url" id="aiHost" value="http://localhost:11434" style="padding:0.25rem; font-size:0.8rem;"></label>
+              <label>Model: <input type="text" id="aiModel" value="llama3" style="padding:0.25rem; font-size:0.8rem;"></label>
+            </div>
+            <div class="chat-box" id="chatBox">
+              <div class="msg ai">Привет! Запустите локальную Ollama, убедитесь, что CORS включен, и я помогу вам.</div>
+            </div>
+            <div class="file-preview" id="filePreview">📎 Изображение прикреплено</div>
+            <div class="input-group">
+              <input type="file" id="aiFile" accept="image/*" style="display:none;" onchange="handleFileSelect()">
+              <button class="btn-icon" onclick="document.getElementById('aiFile').click()" title="Vision">📎</button>
+              <input type="text" id="chatInput" placeholder="Спросить ИИ..." onkeydown="if(event.key==='Enter') sendToAI()">
+              <button class="btn-icon" id="micBtn" onclick="toggleVoice()" title="Голос">🎙️</button>
+              <button class="btn-accent" onclick="sendToAI()">→</button>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div class="tool-card">
-        <h3>🗄️ Менеджер паролей</h3>
-        <p>Данные хранятся локально в вашем браузере.</p>
-        <ul class="password-list" id="passList"></ul>
-      </div>
+      <section id="devtools-tab" class="tab-content">
+        <h1>Работа с кодом, текстом и паролями</h1>
+        <p class="subtitle">Инструменты шифрования, валидации и генерации данных.</p>
+        <div class="tools-grid">
+          <div class="tool-card">
+            <h3>🔐 Генератор паролей</h3>
+            <div class="input-group" style="margin-bottom: 0.5rem;">
+              <input type="text" id="resultPass" readonly placeholder="Нажмите 'Генерировать'">
+              <button onclick="copyText('resultPass')">Копировать</button>
+            </div>
+            <div id="genStrength" class="strength-meter"></div>
+            <div class="form-group">
+              <label>Длина: <span id="lenVal">12</span>
+                <input type="range" id="passLength" min="6" max="30" value="12" oninput="document.getElementById('lenVal').innerText=this.value">
+              </label>
+              <label><input type="checkbox" id="passNum" checked> Цифры</label>
+              <label><input type="checkbox" id="passSym" checked> Спецсимволы</label>
+              <input type="text" id="customSym" placeholder="Дописать свои символы (например: №%@)">
+              <button class="btn-accent" onclick="generatePassword()">Генерировать</button>
+            </div>
+            <div class="form-group" id="saveSection" style="display: none; border-top: 1px solid var(--border-color); padding-top: 0.5rem;">
+              <div class="input-group">
+                <input type="text" id="passTitle" placeholder="Ярлык (например, GitHub)">
+                <button onclick="savePasswordFromGenerator()">В менеджер</button>
+              </div>
+            </div>
+          </div>
 
-      <div class="tool-card">
-        <h3>📥 Умный Downloader</h3>
-        <p>Прямое скачивание файлов в обход встроенного просмотра браузера.</p>
-        <div class="input-group">
-          <input type="url" id="downloadUrl" placeholder="https://example.com/file.pdf">
-          <button class="btn-accent" onclick="smartDownload()">Скачать</button>
+          <div class="tool-card">
+            <h3>🗄️ Менеджер паролей</h3>
+            <p>Локальная база паролей в вашем браузере (LocalStorage).</p>
+            <div class="form-group" style="background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: var(--radius); border: 1px dashed var(--border-color); margin-bottom: 0.5rem;">
+              <input type="text" id="manualTitle" placeholder="Сайт/сервис" style="margin-bottom: 0.25rem; width:100%;">
+              <input type="text" id="manualPass" placeholder="Пароль вручную" style="width:100%;" oninput="checkPasswordStrength(this.value, 'manualStrength')">
+              <div id="manualStrength" class="strength-meter" style="margin-bottom: 0.5rem;"></div>
+              <button class="btn-accent" style="padding: 0.4rem 1rem; font-size: 0.85rem;" onclick="savePasswordManual()">Добавить вручную</button>
+            </div>
+            <ul class="password-list" id="passList"></ul>
+            <div class="btn-group-sm" style="margin-top:auto; justify-content:space-between; display:flex; width: 100%;">
+              <button class="btn-sm" onclick="exportPasswords()">📥 Экспорт (JSON)</button>
+              <button class="btn-sm" onclick="document.getElementById('importFile').click()">📤 Импорт</button>
+              <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importPasswords(this)">
+            </div>
+          </div>
+
+          <div class="tool-card">
+            <h3>🔤 Base64 / URL Трансформер</h3>
+            <textarea id="codecInput" placeholder="Введите исходный текст..."></textarea>
+            <div class="btn-group-sm" style="margin: 0.5rem 0;">
+              <button class="btn-sm btn-accent" onclick="transformText('b64enc')">Base64 Enc</button>
+              <button class="btn-sm btn-accent" onclick="transformText('b64dec')">Base64 Dec</button>
+              <button class="btn-sm" onclick="transformText('urlenc')">URL Enc</button>
+              <button class="btn-sm" onclick="transformText('urldec')">URL Dec</button>
+            </div>
+            <textarea id="codecOutput" readonly placeholder="Результат трансформации..."></textarea>
+            <div class="input-group" style="margin-top:0.5rem;">
+              <button class="btn-sm" onclick="copyText('codecOutput')">Копировать</button>
+              <button class="btn-sm btn-danger" onclick="clearField('codecInput'); clearField('codecOutput');">🗑️</button>
+            </div>
+          </div>
+
+          <div class="tool-card">
+            <h3>💻 Форматтер JSON</h3>
+            <p>Форматирование и валидация сырых JSON структур.</p>
+            <textarea id="jsonInput" placeholder="Вставьте сырой JSON..."></textarea>
+            <div class="input-group" style="margin-top: 0.5rem;">
+              <button class="btn-accent" onclick="formatJSON()">Форматировать</button>
+              <button class="btn-icon" onclick="copyText('jsonInput')">📋</button>
+              <button class="btn-icon" onclick="clearField('jsonInput')">🗑️</button>
+            </div>
+          </div>
+
+          <div class="tool-card">
+            <h3>🔐 Крипто-хэши (Web Crypto API)</h3>
+            <input type="text" id="hashInput" placeholder="Введите текст для расчета..." oninput="calculateHashes(this.value)">
+            <div class="hash-outputs">
+              <div><strong>SHA-256:</strong> <code id="sha256Out">-</code></div>
+              <div><strong>SHA-512:</strong> <code id="sha512Out">-</code></div>
+            </div>
+          </div>
+
+          <div class="tool-card">
+            <h3>🆔 Генератор UUID v4</h3>
+            <div class="input-group" style="margin-top:auto;">
+              <input type="text" id="uuidOut" readonly placeholder="Кликните генерировать">
+              <button class="btn-accent" onclick="generateUUIDv4()">Создать</button>
+            </div>
+          </div>
+
+          <div class="tool-card">
+            <h3>📝 Анализатор текста</h3>
+            <textarea id="textAnalyzer" placeholder="Вставьте текст..." oninput="analyzeText(this.value)"></textarea>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; margin-top:0.5rem; font-size:0.85rem; color:var(--text-muted);">
+              <div>Символов: <strong id="charCount" style="color:var(--text-color)">0</strong></div>
+              <div>Слов: <strong id="wordCount" style="color:var(--text-color)">0</strong></div>
+            </div>
+            <div class="input-group" style="margin-top:0.5rem;">
+              <button class="btn-icon" onclick="clearField('textAnalyzer'); analyzeText('');">🗑️</button>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div class="tool-card">
-        <h3>🕷️ Парсер картинок (HTML)</h3>
-        <p>Вставьте исходный HTML-код страницы, чтобы извлечь медиа.</p>
-        <textarea id="htmlInput" placeholder="Вставьте HTML код сайта..." oninput="scrapeImages(this.value)"></textarea>
-        <div id="scraperResults"></div>
-      </div>
+      <section id="media-tab" class="tab-content">
+        <h1>Мультимедиа, парсинг и загрузки</h1>
+        <p class="subtitle">Работа с медиа-контентом без отправки файлов на внешние сервера.</p>
+        <div class="tools-grid">
+          <div class="tool-card">
+            <h3>🖼️ Конвертер в WebP</h3>
+            <p>Сжатие PNG/JPG локально через Canvas API.</p>
+            <input type="file" id="imageInput" accept="image/*" onchange="convertToWebP(this)" style="margin-top: auto;">
+            <div id="downloadArea" style="margin-top:1rem; display:none; width: 100%;">
+              <button class="btn-accent" id="webpDownloadBtn" style="width: 100%;">Скачать .webp</button>
+            </div>
+          </div>
 
-      <div class="tool-card">
-        <h3>💻 Форматтер JSON</h3>
-        <p>Превратите сжатый или некорректный JSON в читаемый вид.</p>
-        <textarea id="jsonInput" placeholder="Вставьте сырой JSON..."></textarea>
-        <div class="input-group" style="margin-top: 0.5rem;">
-          <button class="btn-accent" onclick="formatJSON()">Форматировать</button>
-          <button class="btn-icon" onclick="copyText('jsonInput')">📋</button>
+          <div class="tool-card">
+            <h3>🕷️ Парсер картинок из HTML</h3>
+            <textarea id="htmlInput" placeholder="Вставьте HTML-код страницы..." oninput="scrapeImages(this.value)"></textarea>
+            <div id="scraperResults"></div>
+          </div>
+
+          <div class="tool-card">
+            <h3>📥 Умный Downloader</h3>
+            <p>Прямое скачивание файлов в обход встроенных просмотрщиков браузера.</p>
+            <div class="input-group" style="margin-top: auto;">
+              <input type="url" id="downloadUrl" placeholder="https://example.com/file.pdf">
+              <button class="btn-accent" onclick="smartDownload()">Скачать</button>
+            </div>
+          </div>
+
+          <div class="tool-card">
+            <h3>🔊 Генератор звуковых частот</h3>
+            <p>Проверка аудиоаппаратуры и наушников (Web Audio API).</p>
+            <div style="margin-top: auto; width: 100%;">
+              <label>Частота: <span id="hzVal">440</span> Гц</label>
+              <input type="range" id="freqRange" min="20" max="15000" value="440" oninput="updateFrequency(this.value)">
+              <div class="input-group" style="margin-top:0.5rem;">
+                <button class="btn-accent" style="flex:1;" onclick="playTone()">Старт</button>
+                <button style="flex:1;" onclick="stopTone()">Стоп</button>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div class="tool-card">
-        <h3>🖼️ Конвертер изображений</h3>
-        <p>Сжатие и конвертация PNG/JPG в WebP без серверов.</p>
-        <input type="file" id="imageInput" accept="image/*" onchange="convertToWebP(this)">
-        <div id="downloadArea" style="margin-top:1rem; display:none;">
-          <button class="btn-accent" id="webpDownloadBtn">Скачать .webp</button>
+      <section id="calc-tab" class="tab-content">
+        <h1>Инженерные и временные калькуляторы</h1>
+        <p class="subtitle">Полезные математические, системные и финансовые вычисления в оффлайне.</p>
+        <div class="tools-grid">
+          <div class="tool-card">
+            <h3>⏰ UNIX-Timestamp Конвертер</h3>
+            
+            <label style="margin-top: 0.5rem;">Из штампа в дату:</label>
+            <div class="input-group">
+              <input type="text" id="unixInput" placeholder="Например: 1718964000">
+              <button class="btn-accent" onclick="convertUnixToDate()">В дату</button>
+            </div>
+            <p style="margin: 0.5rem 0;">Результат: <strong id="unixResult">-</strong></p>
+
+            <hr>
+
+            <label>Из календаря в Unix-Timestamp:</label>
+            <div class="input-group">
+              <input type="datetime-local" id="pickerInput">
+              <button class="btn-accent" onclick="convertPickerToUnix()">В штамп</button>
+            </div>
+            <div class="calc-results" id="pickerResultArea" style="display:none;">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap: 0.5rem;">
+                <span style="min-width:0; flex:1;">Секунды: <strong id="timestampSec">-</strong></span>
+                <button class="btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('timestampSec').innerText); alert('Скопировано!');">📋</button>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; gap: 0.5rem;">
+                <span style="min-width:0; flex:1;">Миллисекунды: <strong id="timestampMs">-</strong></span>
+                <button class="btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('timestampMs').innerText); alert('Скопировано!');">📋</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="tool-card">
+            <h3>📅 Калькулятор дат и интервалов</h3>
+            <p>Расчет разницы между выбранными моментами времени.</p>
+            <div class="form-group">
+              <label>Начальная дата и время:
+                <input type="datetime-local" id="dateStart" onchange="calculateDateDiff()">
+              </label>
+              <div class="btn-group-sm">
+                <button class="btn-sm" onclick="setDatePreset('dateStart', 0)">Сегодня</button>
+                <button class="btn-sm" onclick="setDatePreset('dateStart', 1)">Завтра</button>
+              </div>
+
+              <label style="margin-top:0.5rem;">Конечная дата и время:
+                <input type="datetime-local" id="dateEnd" onchange="calculateDateDiff()">
+              </label>
+              <div class="btn-group-sm">
+                <button class="btn-sm" onclick="setDatePreset('dateEnd', 0)">Сегодня</button>
+                <button class="btn-sm" onclick="setDatePreset('dateEnd', 1)">Завтра</button>
+                <button class="btn-sm" onclick="setDatePreset('dateEnd', 7)">+7 Дней</button>
+              </div>
+            </div>
+            
+            <div class="calc-results" style="margin-top:1rem;">
+              <div>Всего дней: <strong id="resDays">-</strong></div>
+              <div>Всего часов: <strong id="resHours">-</strong></div>
+              <div>Интервал: <strong id="resHuman" style="color:var(--accent-color)">-</strong></div>
+            </div>
+          </div>
+
+          <div class="tool-card">
+            <h3>🌐 IP/CIDR калькулятор подсетей</h3>
+            <div class="form-group">
+              <input type="text" id="cidrIp" value="192.168.1.15" placeholder="IP адрес">
+              <select id="cidrMask">
+                <option value="24" selected>/24 (255.255.255.0)</option>
+                <option value="16">/16 (255.255.0.0)</option>
+                <option value="8">/8 (255.0.0.0)</option>
+                <option value="30">/30 (255.255.255.252)</option>
+                <option value="23">/23 (255.255.254.0)</option>
+              </select>
+              <button class="btn-accent" onclick="calculateSubnet()">Рассчитать</button>
+            </div>
+            <div class="calc-results" id="cidrOut" style="margin-top: 0.75rem;">
+              <div>Сеть: <strong>-</strong></div>
+              <div>Маска: <strong>-</strong></div>
+              <div>Диапазон хостов: <strong>-</strong></div>
+              <div>Broadcast: <strong>-</strong></div>
+            </div>
+          </div>
+
+          <div class="tool-card">
+            <h3>💾 Конвертер величин памяти</h3>
+            <div class="form-group">
+              <input type="number" id="dataSizeInput" value="1" placeholder="Значение" oninput="convertDataSize()">
+              <select id="dataUnitInput" onchange="convertDataSize()">
+                <option value="GB" selected>Гигабайты (GB / ГБ)</option>
+                <option value="MB">Мегабайты (MB / МБ)</option>
+                <option value="KB">Килобайты (KB / КБ)</option>
+              </select>
+            </div>
+            <div class="calc-results" id="dataSizeOut" style="margin-top: 0.75rem;">
+              <div>В байтах: <strong>-</strong></div>
+              <div>В Мегабайтах (MB): <strong>-</strong></div>
+              <div>В Мебибайтах (MiB): <strong>-</strong></div>
+              <div>В Гибибайтах (GiB): <strong>-</strong></div>
+            </div>
+          </div>
+
+          <div class="tool-card">
+            <h3>💳 Кредитный калькулятор</h3>
+            <div class="form-group">
+              <input type="number" id="creditAmount" value="500000" placeholder="Сумма кредита">
+              <input type="number" id="creditTerm" value="12" placeholder="Срок (в месяцах)">
+              <input type="number" id="creditRate" value="12" placeholder="Ставка (%)">
+              <button class="btn-accent" onclick="calculateCredit()">Рассчитать</button>
+            </div>
+            <div class="calc-results" id="creditOut" style="margin-top: 0.75rem;">
+              <div>Ежемесячный платеж: <strong>-</strong></div>
+              <div>Общая выплата: <strong>-</strong></div>
+              <div>Переплата: <strong>-</strong></div>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div class="tool-card">
-        <h3>📝 Анализатор текста</h3>
-        <textarea id="textAnalyzer" placeholder="Вставьте текст для мгновенного анализа..." oninput="analyzeText(this.value)"></textarea>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; margin-top:0.5rem; font-size:0.85rem; color:var(--text-muted);">
-          <div>Символов: <strong id="charCount" style="color:var(--text-color)">0</strong></div>
-          <div>Слов: <strong id="wordCount" style="color:var(--text-color)">0</strong></div>
-          <div style="grid-column: span 2;">Время чтения: ~<strong id="readTime" style="color:var(--text-color)">0</strong> сек.</div>
+      <section id="survival-tab" class="tab-content">
+        <h1>Экстренные утилиты</h1>
+        <p class="subtitle">Автономные функции для непредвиденных ситуаций и подачи сигналов.</p>
+        <div class="tools-grid">
+          <div class="tool-card">
+            <h3>🧭 Оффлайн Гео-Компас</h3>
+            <p>Работает на смартфонах через аппаратный гироскоп/датчик ориентации.</p>
+            <div class="compass-container">
+              <div class="compass-ring" id="compassRing">
+                <span class="compass-label label-n">N</span>
+                <span class="compass-label label-s">S</span>
+                <span class="compass-label label-e">E</span>
+                <span class="compass-label label-w">W</span>
+                <div class="compass-arrow"></div>
+              </div>
+            </div>
+            <button class="btn-accent" onclick="initCompass()" style="font-size:0.85rem; padding:0.4rem; width:100%; margin-top: auto;">Запустить компас</button>
+            <div class="calc-results" style="margin-top:0.5rem; text-align:center;">
+              Направление: <strong id="compassHeading">-°</strong>
+            </div>
+          </div>
+
+          <div class="tool-card">
+            <h3>🚨 Экстренный SOS экран</h3>
+            <p>Мерцание дисплея на максимальной яркости для привлечения внимания или подачи сигналов (Азбука Морзе).</p>
+            <button class="btn-danger" id="sosBtn" onclick="toggleSOS()" style="width:100%; padding:1rem; font-weight:bold; margin-top: auto;">Включить SOS режим</button>
+          </div>
         </div>
-      </div>
+      </section>
 
-    </div>
+    </main>
+  </div>
+
+  <div id="sosOverlay" onclick="toggleSOS()">
+    <h2>СИГНАЛ SOS</h2>
+    <p style="color:#aaa;">Нажмите в любое место экрана, чтобы выйти</p>
   </div>
 
   <script>
-    // --- 1. ГЕНЕРАТОР И МЕНЕДЖЕР ПАРОЛЕЙ ---
+    document.addEventListener("DOMContentLoaded", () => {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      const currentDateTimeStr = now.toISOString().slice(0, 16);
+      
+      document.getElementById('pickerInput').value = currentDateTimeStr;
+      document.getElementById('dateStart').value = currentDateTimeStr;
+      
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setMinutes(tomorrow.getMinutes() - tomorrow.getTimezoneOffset());
+      document.getElementById('dateEnd').value = tomorrow.toISOString().slice(0, 16);
+
+      calculateDateDiff();
+      convertDataSize();
+      renderPasswords();
+    });
+
+    document.querySelectorAll('.menu-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.getAttribute('data-target')).classList.add('active');
+      });
+    });
+
+    function clearField(id) { document.getElementById(id).value = ''; }
+    function copyText(id) {
+      const el = document.getElementById(id);
+      if (!el.value) return alert("Поле пустое!");
+      navigator.clipboard.writeText(el.value);
+      alert("Скопировано в буфер обмена!");
+    }
+
+    function transformText(action) {
+      const input = document.getElementById('codecInput').value;
+      const out = document.getElementById('codecOutput');
+      if(!input) return alert("Введите текст для обработки.");
+      try {
+        if (action === 'b64enc') out.value = btoa(unescape(encodeURIComponent(input)));
+        if (action === 'b64dec') out.value = decodeURIComponent(escape(atob(input)));
+        if (action === 'urlenc') out.value = encodeURIComponent(input);
+        if (action === 'urldec') out.value = decodeURIComponent(input);
+      } catch (e) {
+        alert("Ошибка трансформации! Проверьте валидность входящих данных.");
+      }
+    }
+
+    function formatJSON() {
+      const input = document.getElementById('jsonInput').value;
+      try {
+        if(!input.trim()) return;
+        const parsed = JSON.parse(input);
+        document.getElementById('jsonInput').value = JSON.stringify(parsed, null, 2);
+      } catch(e) {
+        alert("Невалидный JSON: " + e.message);
+      }
+    }
+
+    function generateUUIDv4() {
+      const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+      document.getElementById('uuidOut').value = uuid;
+    }
+
+    async function calculateHashes(text) {
+      const sha256Box = document.getElementById('sha256Out');
+      const sha512Box = document.getElementById('sha512Out');
+      if (!text) {
+        sha256Box.innerText = '-';
+        sha512Box.innerText = '-';
+        return;
+      }
+      const msgBuffer = new TextEncoder().encode(text);
+      
+      const hashBuffer256 = await crypto.subtle.digest('SHA-256', msgBuffer);
+      sha256Box.innerText = Array.from(new Uint8Array(hashBuffer256)).map(b => b.toString(16).padStart(2, '0')).join('');
+      
+      const hashBuffer512 = await crypto.subtle.digest('SHA-512', msgBuffer);
+      sha512Box.innerText = Array.from(new Uint8Array(hashBuffer512)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function analyzeText(val) {
+      document.getElementById('charCount').innerText = val.length;
+      const words = val.trim().split(/\s+/).filter(w => w.length > 0);
+      document.getElementById('wordCount').innerText = words.length;
+    }
+
     let passwords = JSON.parse(localStorage.getItem('pro_multitool_pass')) || [];
+
+    function calculateStrength(password) {
+      if (!password) return { text: '', color: 'transparent' };
+      let score = 0;
+      if (password.length >= 8) score++;
+      if (password.length >= 14) score++;
+      if (/[0-9]/.test(password)) score++;
+      if (/[A-Z]/.test(password)) score++;
+      if (/[^A-Za-z0-9]/.test(password)) score++;
+      if (score <= 2) return { text: 'Слабый', color: '#ef4444' };
+      if (score <= 4) return { text: 'Средний', color: '#f59e0b' };
+      return { text: 'Надежный', color: '#10b981' };
+    }
+
+    function checkPasswordStrength(password, elementId) {
+      const meter = document.getElementById(elementId);
+      if (!password) { meter.style.display = 'none'; return; }
+      const strength = calculateStrength(password);
+      meter.style.display = 'block';
+      meter.innerText = `🛡️ Сложность: ${strength.text}`;
+      meter.style.color = strength.color;
+    }
+
     function generatePassword() {
       const length = document.getElementById('passLength').value;
       let charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
       if (document.getElementById('passNum').checked) charset += "0123456789";
       if (document.getElementById('passSym').checked) charset += "!@#$%^&*()_+~}{[]:;?><,./-=";
+      const customSymbols = document.getElementById('customSym').value;
+      if (customSymbols) charset += customSymbols;
+      
       let password = "";
       for (let i = 0; i < length; i++) password += charset.charAt(Math.floor(Math.random() * charset.length));
       document.getElementById('resultPass').value = password;
-      document.getElementById('saveSection').style.display = 'block';
+      checkPasswordStrength(password, 'genStrength');
+      document.getElementById('saveSection').style.display = 'flex';
     }
-    function copyText(id) {
-      const el = document.getElementById(id);
-      if (!el.value) return;
-      navigator.clipboard.writeText(el.value);
-      alert("Скопировано в буфер обмена!");
-    }
+
     function renderPasswords() {
       const list = document.getElementById('passList');
-      list.innerHTML = passwords.length === 0 ? '<p style="font-size:0.85rem;">Хранилище пусто</p>' : '';
+      list.innerHTML = passwords.length === 0 ? '<p style="font-size:0.85rem; padding: 0.5rem 0;">Хранилище пусто</p>' : '';
       passwords.forEach((p, idx) => {
+        const strength = calculateStrength(p.val);
         const li = document.createElement('li');
         li.className = 'password-item';
-        li.innerHTML = `<div><strong style="font-size:0.85rem;display:block;">${p.name}</strong><code style="font-size:0.8rem;color:var(--text-muted);">${p.val}</code></div>
-                        <button class="btn-danger" onclick="deletePassword(${idx})">🗑️</button>`;
+        li.innerHTML = `<div><strong style="font-size:0.85rem;display:block;color:#60a5fa;overflow:hidden;text-overflow:ellipsis;">${p.name}</strong><code style="font-size:0.8rem;color:var(--text-muted); word-break:break-all;">${p.val}</code><span class="saved-strength" style="color: ${strength.color};">• ${strength.text}</span></div>
+                        <button class="btn-danger btn-sm" onclick="deletePassword(${idx})">🗑️</button>`;
         list.appendChild(li);
       });
     }
-    function savePassword() {
-      const name = document.getElementById('passTitle').value;
+
+    function savePasswordFromGenerator() {
+      const nameField = document.getElementById('passTitle');
       const val = document.getElementById('resultPass').value;
-      if (!name || !val) return alert("Заполните поля!");
+      const name = nameField.value.trim();
+      if (!name || !val) return alert("Заполните ярлык!");
       passwords.push({ name, val });
       localStorage.setItem('pro_multitool_pass', JSON.stringify(passwords));
-      document.getElementById('passTitle').value = '';
+      nameField.value = '';
       renderPasswords();
     }
+
+    function savePasswordManual() {
+      const nameField = document.getElementById('manualTitle');
+      const valField = document.getElementById('manualPass');
+      const name = nameField.value.trim();
+      const val = valField.value.trim();
+      if (!name || !val) return alert("Заполните имя и пароль!");
+      passwords.push({ name, val });
+      localStorage.setItem('pro_multitool_pass', JSON.stringify(passwords));
+      nameField.value = ''; valField.value = '';
+      document.getElementById('manualStrength').style.display = 'none';
+      renderPasswords();
+    }
+
     function deletePassword(idx) {
+      if(!confirm("Удалить этот пароль?")) return;
       passwords.splice(idx, 1);
       localStorage.setItem('pro_multitool_pass', JSON.stringify(passwords));
       renderPasswords();
     }
 
-    // --- 2. ГОЛОСОВОЙ ВВОД (STT) ---
-    let recognition;
-    let isRecording = false;
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognition = new SpeechRecognition();
-      recognition.lang = 'ru-RU';
-      recognition.interimResults = false;
-      recognition.onresult = (e) => { document.getElementById('chatInput').value += e.results[0][0].transcript; };
-      recognition.onend = () => { isRecording = false; document.getElementById('micBtn').style.background = ''; };
-    }
-    function toggleVoice() {
-      if (!recognition) return alert("Голосовой ввод не поддерживается вашим браузером.");
-      if (isRecording) { recognition.stop(); } 
-      else { isRecording = true; document.getElementById('micBtn').style.background = '#ef4444'; recognition.start(); }
+    function exportPasswords() {
+      if(passwords.length === 0) return alert("Нечего экспортировать.");
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(passwords, null, 2));
+      const dlAnchor = document.createElement('a');
+      dlAnchor.setAttribute("href", dataStr);
+      dlAnchor.setAttribute("download", `toolbox_passwords_backup.json`);
+      document.body.appendChild(dlAnchor);
+      dlAnchor.click();
+      dlAnchor.remove();
     }
 
-    // --- 3. ИИ-ЧАТ (OLLAMA API С ПОДДЕРЖКОЙ VISION) ---
-    let attachedBase64Image = null;
-    function handleFileSelect() {
-      const file = document.getElementById('aiFile').files[0];
+    function importPasswords(input) {
+      const file = input.files[0];
       if (!file) return;
       const reader = new FileReader();
       reader.onload = function(e) {
-        attachedBase64Image = e.target.result.split(',')[1];
-        document.getElementById('filePreview').style.display = 'block';
-      }
-      reader.readAsDataURL(file);
+        try {
+          const imported = JSON.parse(e.target.result);
+          if(Array.isArray(imported)) {
+            passwords = passwords.concat(imported);
+            localStorage.setItem('pro_multitool_pass', JSON.stringify(passwords));
+            renderPasswords();
+            alert("Пароли успешно импортированы!");
+          } else { alert("Неверный формат резервной копии."); }
+        } catch(err) { alert("Ошибка при чтении файла JSON."); }
+      };
+      reader.readAsText(file);
     }
+
+    let attachedImageBase64 = "";
+
+    function handleFileSelect() {
+      const file = document.getElementById('aiFile').files[0];
+      if(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          attachedImageBase64 = e.target.result.split(',')[1];
+          document.getElementById('filePreview').style.display = "block";
+        }
+        reader.readAsDataURL(file);
+      }
+    }
+
     async function sendToAI() {
       const host = document.getElementById('aiHost').value.trim();
       const model = document.getElementById('aiModel').value.trim();
-      const input = document.getElementById('chatInput');
-      const text = input.value.trim();
-      if (!text && !attachedBase64Image) return;
+      const inputEl = document.getElementById('chatInput');
+      const text = inputEl.value.trim();
+      if(!text) return;
 
       const chatBox = document.getElementById('chatBox');
-      chatBox.innerHTML += `<div class="msg user">${text} ${attachedBase64Image ? '[🖼️ Изображение]' : ''}</div>`;
-      input.value = '';
-      document.getElementById('filePreview').style.display = 'none';
+      chatBox.innerHTML += `<div class="msg user">${text}</div>`;
+      inputEl.value = "";
+      chatBox.scrollTop = chatBox.scrollHeight;
 
       const aiMsgDiv = document.createElement('div');
-      aiMsgDiv.className = 'msg ai';
-      aiMsgDiv.innerText = 'Нейросеть думает...';
+      aiMsgDiv.className = "msg ai";
+      aiMsgDiv.innerText = "Думает...";
       chatBox.appendChild(aiMsgDiv);
-      chatBox.scrollTop = chatBox.scrollHeight;
 
-      const payload = { model: model, prompt: text, stream: false };
-      if (attachedBase64Image) {
-        payload.images = [attachedBase64Image];
-        attachedBase64Image = null;
-        document.getElementById('aiFile').value = '';
+      const payload = {
+        model: model,
+        prompt: text,
+        stream: false
+      };
+
+      if(attachedImageBase64) {
+        payload.images = [attachedImageBase64];
+        attachedImageBase64 = "";
+        document.getElementById('filePreview').style.display = "none";
+        document.getElementById('aiFile').value = "";
       }
 
       try {
-        const response = await fetch(`${host}/api/generate`, {
+        const res = await fetch(`${host}/api/generate`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {'Content-Type': 'application/json'},
           body: JSON.stringify(payload)
         });
-        const data = await response.json();
+        if(!res.ok) throw new Error("Код ответа сервера: " + res.status);
+        const data = await res.json();
         aiMsgDiv.innerText = data.response;
-      } catch (err) {
-        aiMsgDiv.innerText = `Ошибка. Убедитесь, что Ollama запущена на ${host}, настроены CORS (OLLAMA_ORIGINS="*") и скачана модель '${model}'.`;
+      } catch(e) {
+        aiMsgDiv.innerText = `Ошибка подключения к Ollama: ${e.message}. Убедитесь, что Ollama запущена локально и настроены CORS заголовки (OLLAMA_ORIGINS="*").`;
       }
       chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    // --- 4. УМНЫЙ ЗАГРУЗЧИК (BLOB DOWNLOAD) ---
-    async function smartDownload() {
-      const url = document.getElementById('downloadUrl').value.trim();
-      if (!url) return alert("Введите ссылку!");
-      try {
-        const response = await fetch(url);
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = url.split('/').pop() || 'file';
-        a.click();
-        URL.revokeObjectURL(blobUrl);
-      } catch (err) {
-        alert("Браузер заблокировал прямую загрузку из-за CORS ограничений целевого сайта.");
-      }
-    }
-
-    // --- 5. КЛИЕНТСКИЙ HTML СКРАПЕР ---
-    function scrapeImages(htmlContent) {
-      const resultsDiv = document.getElementById('scraperResults');
-      resultsDiv.innerHTML = '';
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(htmlContent, 'text/html');
-      const images = doc.querySelectorAll('img');
-      if (images.length === 0) { resultsDiv.innerHTML = '<span style="color:var(--text-muted);">Изображений не найдено</span>'; return; }
+    let recognition;
+    let isListening = false;
+    function toggleVoice() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if(!SpeechRecognition) return alert("Ваш браузер не поддерживает Speech Recognition API локально.");
       
-      resultsDiv.innerHTML = `<p style="color:var(--accent-color); margin-bottom:0.5rem;">Найдено изображений: ${images.length}</p>`;
-      images.forEach((img) => {
-        const src = img.getAttribute('src');
-        if (!src) return;
-        const item = document.createElement('div');
-        item.style = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem; background:var(--bg-color); padding:0.25rem; border-radius:4px;';
-        item.innerHTML = `<span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:220px; font-size:0.8rem;">${src}</span>
-                          <a href="${src}" target="_blank" style="font-size:0.8rem; color:var(--accent-color);">Открыть ↗</a>`;
-        resultsDiv.appendChild(item);
-      });
+      if(!recognition) {
+        recognition = new SpeechRecognition();
+        recognition.lang = 'ru-RU';
+        recognition.continuous = false;
+        recognition.interimResults = false;
+
+        recognition.onstart = () => {
+          isListening = true;
+          document.getElementById('micBtn').style.backgroundColor = "var(--danger-color)";
+        };
+        recognition.onend = () => {
+          isListening = false;
+          document.getElementById('micBtn').style.backgroundColor = "";
+        };
+        recognition.onresult = (event) => {
+          const resultText = event.results[0][0].transcript;
+          document.getElementById('chatInput').value += resultText;
+        };
+        recognition.onerror = (e) => alert("Ошибка записи: " + e.error);
+      }
+
+      if(isListening) { recognition.stop(); } else { recognition.start(); }
     }
 
-    // --- 6. JSON ФОРМАТТЕР ---
-    function formatJSON() {
-      const area = document.getElementById('jsonInput');
-      try {
-        if (!area.value.trim()) return;
-        area.value = JSON.stringify(JSON.parse(area.value), null, 2);
-      } catch (e) { alert("Неверный синтаксис JSON!"); }
-    }
-
-    // --- 7. КОНВЕРТЕР В WEBP ---
     function convertToWebP(input) {
       const file = input.files[0];
-      if (!file) return;
+      if(!file) return;
       const reader = new FileReader();
       reader.onload = function(event) {
         const img = new Image();
         img.onload = function() {
           const canvas = document.createElement('canvas');
-          canvas.width = img.width; canvas.height = img.height;
+          canvas.width = img.width;
+          canvas.height = img.height;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0);
+          
           canvas.toBlob(function(blob) {
             const url = URL.createObjectURL(blob);
-            const btn = document.getElementById('webpDownloadBtn');
-            document.getElementById('downloadArea').style.display = 'block';
-            btn.onclick = function() {
+            const dlBtn = document.getElementById('webpDownloadBtn');
+            dlBtn.onclick = () => {
               const a = document.createElement('a');
-              a.href = url; a.download = file.name.split('.')[0] + '.webp'; a.click();
+              a.href = url;
+              a.download = file.name.replace(/\.[^/.]+$/, "") + ".webp";
+              a.click();
             };
+            document.getElementById('downloadArea').style.display = "block";
           }, 'image/webp', 0.85);
         };
         img.src = event.target.result;
@@ -429,16 +883,243 @@
       reader.readAsDataURL(file);
     }
 
-    // --- 8. АНАЛИЗАТОР ТЕКСТА ---
-    function analyzeText(val) {
-      document.getElementById('charCount').innerText = val.length;
-      const words = val.trim() === '' ? 0 : val.trim().split(/\s+/).length;
-      document.getElementById('wordCount').innerText = words;
-      document.getElementById('readTime').innerText = Math.ceil((words / 140) * 60);
+    function scrapeImages(htmlCode) {
+      const container = document.getElementById('scraperResults');
+      container.innerHTML = "";
+      if(!htmlCode) return;
+      
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlCode, 'text/html');
+      const images = doc.querySelectorAll('img');
+      
+      if(images.length === 0) {
+        container.innerText = "Изображений в HTML-коде не найдено.";
+        return;
+      }
+      
+      images.forEach(img => {
+        const src = img.getAttribute('src');
+        if(src) {
+          const link = document.createElement('a');
+          link.className = 'img-scraped-link';
+          link.href = src;
+          link.target = "_blank";
+          link.innerText = src;
+          container.appendChild(link);
+        }
+      });
     }
 
-    // Старт
-    renderPasswords();
+    function smartDownload() {
+      const url = document.getElementById('downloadUrl').value.trim();
+      if(!url) return alert("Введите URL файла.");
+      fetch(url)
+        .then(res => {
+          if(!res.ok) throw new Error("Сеть ответила ошибкой.");
+          return res.blob();
+        })
+        .then(blob => {
+          const localUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = localUrl;
+          a.download = url.split('/').pop() || 'downloaded_file';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        })
+        .catch(e => alert("Ошибка скачивания: " + e.message + ". Обратите внимание, что удаленный сервер должен разрешать CORS запросы."));
+    }
+
+    let audioCtx;
+    let oscillator;
+    function playTone() {
+      if(!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if(oscillator) return;
+      
+      oscillator = audioCtx.createOscillator();
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(document.getElementById('freqRange').value, audioCtx.currentTime);
+      oscillator.connect(audioCtx.destination);
+      oscillator.start();
+    }
+    function stopTone() {
+      if(oscillator) {
+        oscillator.stop();
+        oscillator.disconnect();
+        oscillator = null;
+      }
+    }
+    function updateFrequency(val) {
+      document.getElementById('hzVal').innerText = val;
+      if(oscillator) {
+        oscillator.frequency.setValueAtTime(val, audioCtx.currentTime);
+      }
+    }
+
+    function convertUnixToDate() {
+      const val = document.getElementById('unixInput').value.trim();
+      if(!val) return;
+      const isMs = val.length > 11;
+      const date = new Date(parseInt(val) * (isMs ? 1 : 1000));
+      document.getElementById('unixResult').innerText = date.toLocaleString('ru-RU');
+    }
+
+    function convertPickerToUnix() {
+      const pickerVal = document.getElementById('pickerInput').value;
+      if(!pickerVal) return;
+      const date = new Date(pickerVal);
+      const sec = Math.floor(date.getTime() / 1000);
+      const ms = date.getTime();
+      document.getElementById('timestampSec').innerText = sec;
+      document.getElementById('timestampMs').innerText = ms;
+      document.getElementById('pickerResultArea').style.display = "block";
+    }
+
+    function setDatePreset(targetId, offsetDays) {
+      const baseDate = new Date();
+      baseDate.setDate(baseDate.getDate() + offsetDays);
+      baseDate.setMinutes(baseDate.getMinutes() - baseDate.getTimezoneOffset());
+      document.getElementById(targetId).value = baseDate.toISOString().slice(0, 16);
+      calculateDateDiff();
+    }
+
+    function calculateDateDiff() {
+      const startVal = document.getElementById('dateStart').value;
+      const endVal = document.getElementById('dateEnd').value;
+      if(!startVal || !endVal) return;
+
+      const start = new Date(startVal);
+      const end = new Date(endVal);
+      const diffMs = end - start;
+
+      if(diffMs < 0) {
+        document.getElementById('resHuman').innerText = "Конечная дата меньше начальной";
+        return;
+      }
+
+      const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const totalDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+      const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+      document.getElementById('resDays').innerText = totalDays;
+      document.getElementById('resHours').innerText = totalHours;
+      document.getElementById('resHuman').innerText = `${days}д. ${hours}ч. ${minutes}мин.`;
+    }
+
+    function calculateSubnet() {
+      const ip = document.getElementById('cidrIp').value.trim();
+      const maskBits = parseInt(document.getElementById('cidrMask').value);
+      
+      const ipParts = ip.split('.').map(Number);
+      if(ipParts.length !== 4 || ipParts.some(isNaN)) return alert("Неверный формат IP адреса");
+
+      let maskBinary = "".padStart(maskBits, "1").padEnd(32, "0");
+      let maskParts = [];
+      for(let i=0; i<4; i++) maskParts.push(parseInt(maskBinary.substr(i*8, 8), 2));
+
+      let netParts = [];
+      let bcastParts = [];
+      for(let i=0; i<4; i++) {
+        netParts.push(ipParts[i] & maskParts[i]);
+        bcastParts.push(netParts[i] | (~maskParts[i] & 255));
+      }
+
+      let firstHost = [...netParts]; firstHost[3] += 1;
+      let lastHost = [...bcastParts]; lastHost[3] -= 1;
+
+      const outContainer = document.getElementById('cidrOut');
+      outContainer.children[0].innerHTML = `Сеть: <strong>${netParts.join('.')}</strong>`;
+      outContainer.children[1].innerHTML = `Маска: <strong>${maskParts.join('.')} (/${maskBits})</strong>`;
+      outContainer.children[2].innerHTML = `Диапазон хостов: <strong>${firstHost.join('.')} - ${lastHost.join('.')}</strong>`;
+      outContainer.children[3].innerHTML = `Broadcast: <strong>${bcastParts.join('.')}</strong>`;
+    }
+
+    function convertDataSize() {
+      const inputVal = parseFloat(document.getElementById('dataSizeInput').value) || 0;
+      const unit = document.getElementById('dataUnitInput').value;
+      
+      let bytes = 0;
+      if (unit === "GB") bytes = inputVal * 1e9;
+      if (unit === "MB") bytes = inputVal * 1e6;
+      if (unit === "KB") bytes = inputVal * 1000;
+
+      const mib = bytes / (1024 * 1024);
+      const gib = bytes / (1024 * 1024 * 1024);
+
+      const out = document.getElementById('dataSizeOut');
+      out.children[0].innerHTML = `В байтах: <strong>${bytes.toLocaleString()} Б</strong>`;
+      out.children[1].innerHTML = `В Мегабайтах (MB): <strong>${(bytes/1e6).toFixed(2)} MB</strong>`;
+      out.children[2].innerHTML = `В Мебибайтах (MiB): <strong>${mib.toFixed(2)} MiB</strong>`;
+      out.children[3].innerHTML = `В Гибибайтах (GiB): <strong>${gib.toFixed(3)} GiB</strong>`;
+    }
+
+    function calculateCredit() {
+      const amount = parseFloat(document.getElementById('creditAmount').value);
+      const term = parseFloat(document.getElementById('creditTerm').value);
+      const rate = parseFloat(document.getElementById('creditRate').value) / 100 / 12;
+
+      if(isNaN(amount) || isNaN(term) || isNaN(rate)) return;
+
+      const monthlyPayment = amount * (rate * Math.pow(1 + rate, term)) / (Math.pow(1 + rate, term) - 1);
+      const totalRepayment = monthlyPayment * term;
+      const overpayment = totalRepayment - amount;
+
+      const out = document.getElementById('creditOut');
+      out.children[0].innerHTML = `Ежемесячный платеж: <strong>${monthlyPayment.toFixed(2)} ₽</strong>`;
+      out.children[1].innerHTML = `Общая выплата: <strong>${totalRepayment.toFixed(2)} ₽</strong>`;
+      out.children[2].innerHTML = `Переплата: <strong>${overpayment.toFixed(2)} ₽</strong>`;
+    }
+
+    function initCompass() {
+      if (!window.DeviceOrientationEvent) return alert("Устройство не поддерживает Device Orientation API");
+      
+      const onOrientationChange = (event) => {
+        let heading = event.webkitCompassHeading || Math.abs(event.alpha - 360);
+        if(heading === undefined || heading === null) return;
+        
+        document.getElementById('compassHeading').innerText = Math.round(heading) + "°";
+        document.getElementById('compassRing').style.transform = `rotate(${-heading}deg)`;
+      };
+
+      if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission()
+          .then(permissionState => {
+            if (permissionState === 'granted') {
+              window.addEventListener('deviceorientation', onOrientationChange, true);
+            } else { alert("Доступ к датчикам движения отклонен."); }
+          })
+          .catch(console.error);
+      } else {
+        window.addEventListener('deviceorientation', onOrientationChange, true);
+      }
+    }
+
+    let sosInterval;
+    let isSosOn = false;
+    function toggleSOS() {
+      const overlay = document.getElementById('sosOverlay');
+      isSosOn = !isSosOn;
+      
+      if(isSosOn) {
+        document.body.classList.add('sos-active');
+        overlay.classList.add('active');
+        let state = false;
+        sosInterval = setInterval(() => {
+          overlay.style.backgroundColor = state ? "#ff0000" : "#000000";
+          state = !state;
+        }, 300);
+      } else {
+        clearInterval(sosInterval);
+        document.body.classList.remove('sos-active');
+        overlay.classList.remove('active');
+        overlay.style.backgroundColor = "#000000";
+      }
+    }
   </script>
 </body>
 </html>
